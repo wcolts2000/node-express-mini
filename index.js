@@ -34,12 +34,21 @@ server.get("/api/users/:userid", (req, res) => {
 });
 
 server.post("/api/users", (req, res) => {
-  const user = req.body;
-  console.log("USER", user);
+  const userInfo = req.body; // reads information from the body of the request
 
-  db.insert(user)
-    .then(result => res.status(201).json(result))
-    .catch(err => res.status(500).json({ error: err }));
+  db.insert(userInfo) // returns a promise, so we need to use .then
+    .then(result => {
+      db.findById(result.id)
+        .then(user => {
+          res.status(201).json(user);
+        })
+        .catch(err =>
+          res.status(500).json({ message: "the get by id failed", error: err })
+        );
+    })
+    .catch(err =>
+      res.status(500).json({ message: "the post failed", error: err })
+    );
 });
 
 server.delete("/api/users/:id", (req, res) => {
