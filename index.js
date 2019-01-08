@@ -5,6 +5,9 @@ const PORT = 5000;
 
 const server = express();
 
+// wireup global middleware
+server.use(express.json());
+
 server.get("/", (req, res) => {
   db.find()
     .then(users => {
@@ -28,6 +31,57 @@ server.get("/api/users/:userid", (req, res) => {
     })
 
     .catch(err => res.json(err));
+});
+
+server.post("/api/users", (req, res) => {
+  const user = req.body;
+  console.log("USER", user);
+
+  db.insert(user)
+    .then(result => res.status(201).json(result))
+    .catch(err => res.status(500).json({ error: err }));
+});
+
+server.delete("/api/users/:id", (req, res) => {
+  const { id } = req.params;
+
+  db.findById(id)
+    .then(user => {
+      if (user) {
+        db.remove(id).then(count => {
+          res.status(200).json(user);
+        });
+      } else {
+        res.status(500);
+      }
+    })
+    .catch(err => res.status(500).json(err));
+});
+
+server.get("/users/first/:first/last/:last", (req, res) => {
+  res.send({ hello: `${req.params.first} ${req.params.last}` });
+});
+
+// greet?first=kai&last=Lovingfoss
+server.get("/greet", (req, res) => {
+  const { first, last } = req.query;
+
+  res.send({ greetings: `${first} ${last}` });
+});
+
+server.put("/api/users/:id", async (req, res) => {
+  const id = req.params.id;
+  const changes = req.body;
+
+  try {
+    const result = await db.update(id, changes);
+
+    console.log("result", result);
+
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json(err);
+  }
 });
 
 server.listen(PORT, () => {
